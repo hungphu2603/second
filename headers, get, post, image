@@ -1,0 +1,61 @@
+#header , get , post , image
+import urllib
+import urllib2
+import os
+
+class myDataBase() :
+        
+        @classmethod
+        def addPrefix(cls, url) :
+                newurl =  'http://'+ url
+                return newurl
+                
+        @classmethod
+        def inputValue(cls,url):
+                inputDict = { 'Phu Huynh':'checking'}
+                request = urllib2.Request(url)
+                request.add_data(urllib.urlencode(inputDict))
+                return urllib2.urlopen(request).read()
+        
+        @classmethod
+        def Header(cls,url) :
+                myHeader = urllib2.urlopen(url).read()
+                return myHeader
+
+        @classmethod
+        def saveImage(cls,url):
+                print url
+                myImage = urllib.urlretrieve(url,'d://httpbin_image.jpg')
+                os.startfile('d://httpbin_image.jpg')
+                #make sure the save file is oke
+                result = os.path.isfile('d://httpbin_image.jpg')
+                # save the seconfile and check picture
+                newImage = urllib.urlretrieve(url,'d://httpbin_image_2.jpg')
+                os.startfile('d://httpbin_image_2.jpg')
+                
+                thirdImage = urllib.urlretrieve(url,'d://httpbin_image_3.jpg')
+                os.startfile('d://httpbin_image_3.jpg')
+                return result
+
+class callMethod(myDataBase) :
+        @classmethod
+        def readHeader(cls,value) :
+                ObjTemp   = cls.addPrefix(value)
+                myHeader  = cls.Header(ObjTemp)
+                print myHeader
+        @classmethod
+        def readInput(cls,value):
+                ObjTemp   = cls.addPrefix(value)
+                myInfor  = cls.inputValue(ObjTemp)
+                print myInfor
+
+        @classmethod
+        def readImage(cls,value):
+                ObjTemp   = cls.addPrefix(value)
+                myFile    = cls.saveImage(ObjTemp)
+                print myFile
+                
+if __name__ == '__main__':
+    callMethod.readHeader('httpbin.org/get')
+    callMethod.readInput('httpbin.org/post')
+    callMethod.readImage('httpbin.org/image')
