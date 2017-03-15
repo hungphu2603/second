@@ -1,0 +1,20 @@
+# @Scenario A_INTEL_NS_COPS_00018.PY
+#
+# @Dependencies
+# 1. Working HL8548x module
+#
+# @Test Cases
+# Test Name                              Description
+# A_INTEL_NS_COPS_00018                  Function text for the COPS command
+#                                        INT6250-1870 Item coverage
+# @History
+# Date          Author             Modification
+# 2016-07-19    nthanhhuan         Create file
+# 
+#
+#
+#------------------------------------------------------------------------------------
+
+################################################################
+################################################################
+################################################################
