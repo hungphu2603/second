@@ -1,0 +1,6 @@
+import urllib
+import os
+
+
+urllib.urlretrieve ('http://httpbin.org/image','d://httpbin_image.jpg')
+os.startfile('d://httpbin_image.jpg')
