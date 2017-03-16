@@ -15,28 +15,35 @@ if ser.isOpen():
     print 'Port',ser.name,'open ok for test...\n'
 else:
     print 'Port',ser.name,'closed'
-print 'START'
+print 'START\n'
            
-#write command
+#write AT_command
+
+at_req=['AT+IPR=?','AT+IPR?','AT+IPR=19200','AT+IPR?','AT+IPR=200','AT+IPR?']
+         
 def write(ser):
-    ser.write('AT'+"\r\n") #write AT command
-    time.sleep(3) #wait time to receive result
+    step=1
+    for n in range(0,len(at_req)):
+        
+        step=step+1
+        result=(at_req[n])
+        
+        ser.write(at_req[n]+"\r\n") 
+        time.sleep(1)
     
 #print result
 def read(ser):
-    result = '' # result is strings
+    result = '' 
     while ser.inWaiting() > 0: 
-        result += ser.read(ser.inWaiting()) 
-        #arr.append(result)
+        result = ser.read(ser.inWaiting()) 
     return result
-
+                  
 def main():
     write(ser)
     num = read(ser)
-    print num
+    print num +"\n"
 
 if __name__ == '__main__':
     main()
 
-
-    
+ser.close()
