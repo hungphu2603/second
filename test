@@ -1,0 +1,52 @@
+import serial
+import time, datetime
+
+ser = serial.Serial(
+    port='COM6',
+    baudrate='115200',
+    bytesize=8,
+    parity='N',
+    stopbits=1
+    )
+
+ser.timeout=10
+
+if ser.isOpen():
+    print 'Port',ser.name,'open ok for test...\n'
+else:
+    print 'Port',ser.name,'closed'
+print 'START\n'
+           
+#write command3
+
+at_req=['AT+IPR=?','AT+IPR?','AT+IPR=19200','AT+IPR?','AT+IPR=200','AT+IPR?']
+
+         
+def write(ser):
+    step=1
+    for n in range(0,len(at_req)):
+        print 'Step ' +str(step)
+        step=step+1
+        result=(at_req[n])
+        print result + "\n"
+        ser.write(at_req[n]+"\r\n") #write AT command
+        time.sleep(1) #wait time to receive result
+    
+#print result
+def read(ser):
+    result = '' 
+    while ser.inWaiting() > 0: 
+        result = ser.read(ser.inWaiting()) 
+    return result
+                  
+def main():
+    write(ser)
+    num = read(ser)
+    print num
+
+if __name__ == '__main__':
+    main()
+
+ser.close()
+
+    
