@@ -56,6 +56,6 @@ class callMethod(myDataBase) :
                 print myFile
                 
 if __name__ == '__main__':
-    callMethod.readHeader('httpbin.org/get')
+    callMethod.readHeader('httpbin.org/get') #beware https or http
     callMethod.readInput('httpbin.org/post')
     callMethod.readImage('httpbin.org/image')
