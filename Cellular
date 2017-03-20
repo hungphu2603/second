@@ -1,0 +1,154 @@
+import serial
+import time, datetime
+
+ser = serial.Serial(
+    port='COM6',
+    baudrate='115200'
+    )
+ser.timeout=5
+
+if ser.isOpen():
+    print 'Port',ser.name,'open ok for test...\n'
+else:
+    print 'Port',ser.name,'closed'
+print 'START\n'
+
+try:
+    print '_________Preconfig________'     
+
+    #Turn off echo    
+    ser.write('ATE0'+"\r\n")
+    time.sleep(1)
+    result = ''
+    while ser.inWaiting() > 0:
+        result += ser.read()    
+    a = result.find('ERROR')            #check have str 'ERROR' in result
+    b = result.find('OK')               #check have str 'OK' in result, 
+  
+    if a > 0:                           #have str 'ERROR' in result
+        print 'Wrong AT command\r\n'     
+    elif b >0:                          #have str 'OK' in result
+        print 'Turn off echo', '\r\n' + result   
+        print 'Passed' 
+    else:
+        print 'Failed\n'
+        
+    #Verify Supported Baud Rate    
+    ser.write('ATE0'+"\r\n")
+    time.sleep(1)
+    result = ''
+    while ser.inWaiting() > 0:
+        result += ser.read()    
+    a = result.find('ERROR')            #check have str 'ERROR' in result
+    b = result.find('OK')               #check have str 'OK' in result, result of command ATE0 just OK, not \r\nOK\r\n
+  
+    if a > 0:                           #have str 'ERROR' in result
+        print 'Wrong AT command\r\n'     
+    elif b >0:                          #have str 'OK' in result
+        print 'Current Baud Rate', '\r\n' + result   
+        print 'Passed' 
+    else:
+        print 'Failed\n'
+    
+    #Firmware Version
+    ser.write('AT+CGMR'+"\r\n")
+    time.sleep(1)
+    result = ''
+    while ser.inWaiting() > 0:
+        result += ser.read()    
+    a = result.find('ERROR')            #check have str 'ERROR' in result
+    b = result.find('\r\nOK\r\n')       #check have str 'OK' in result 
+  
+    if a > 0:                           #have str 'ERROR' in result
+        print 'Wrong AT command\r\n'     
+    elif b >0:                          #have str 'OK' in result
+        print 'Firmware Version', '\r\n' + result   
+        print 'Passed' 
+    else:
+        print 'Failed\n'
+    #
+    
+
+    #STEP 1
+    print '_________Step1_________'
+    ser.write("AT+COPS=?"+"\r\n")
+    time.sleep(40)                  #AT+COPS=? waiting long time to receive result 40s
+    result = ''
+    while ser.inWaiting() > 0:
+        result += ser.read()    
+    a = result.find('ERROR')        #check have str 'ERROR' in result
+    b = result.find('OK')           #check have str 'OK' in result
+    print '\r\n' + result
+        
+    if a > 0:                       #have str 'ERROR' in result 
+        print 'Wrong AT command\r\n'
+    elif b >0:                      #have str 'OK' in result
+        print 'Passed\r\n'
+    else:
+        print 'Failed\r\n'
+         
+        
+    #STEP 2          
+    print '_________Step2_________'     
+    
+    ser.write("AT+COPS?"+"\r\n")
+    time.sleep(1)
+    result = ''
+    while ser.inWaiting() > 0:
+        result += ser.read()    
+    a = result.find('ERROR')            #check have str 'ERROR' in result
+    b = result.find('OK')               #check have str 'OK' in result 
+  
+    if a > 0:                           #have str 'ERROR' in result
+        print 'Wrong AT command\r\n'     
+    elif b >0:                          #have str 'OK' in result
+        print 'Detail of Register Operator' 
+        print '\r\n' + result           #detail of Register Operator:
+        print 'Passed' 
+    else:
+        print 'Failed\n'
+    
+    ser.write("AT+COPS=2"+"\r\n")       #write AT_command: deregister
+    time.sleep(5)
+    result = ''
+    
+    while ser.inWaiting() > 0:
+        result += ser.read()    
+    a = result.find('ERROR')            #check have str 'ERROR' in result
+    b = result.find('OK')               #check have str 'OK' in result 
+    
+    if a > 0:                           #have str 'ERROR' in result
+        print 'Wrong AT command\r\n'
+    elif b > 0:                         #have str 'OK' in result
+        print 'Deregister success'      #Deregister from Operator
+        print '\r\n' + result           
+        print 'Passed' 
+    else:
+        print 'Failed\n'
+    
+    #STEP 3
+    print '_________Step3_________'    
+        
+    ser.write('AT+COPS=0,0,"VIETTEL",0'+"\r\n") #write AT_command to register Operator, in automatic mode, UMTS will always be auto select
+    time.sleep(8)
+    result = ''
+    while ser.inWaiting() > 0:
+        result += ser.read()
+    a = result.find('ERROR')            #check have str 'ERROR' in result
+    b = result.find('OK')               #check have str 'OK' in result 
+    
+    if a > 0:                           #have str 'ERROR' in result
+        print 'Wrong AT command\r\n'
+    elif b > 0:                         #have str 'OK' in result
+        print 'Register seccess'        #Register from Operator
+        print '\r\n' + result           
+        print 'Passed' 
+    else:
+        print 'Failed\n'
+    
+    #Close Serial
+    
+    ser.close()
+    
+except ValueError:
+    print "Fail to test"
