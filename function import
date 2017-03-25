@@ -1,0 +1,114 @@
+#Import module
+
+import serial
+import time
+
+# Global variable
+prt_dft = 'COM13'
+baudRate_dft = '115200'
+timeOut_dft = 2
+resultTC = "Passed"
+
+
+##############################Function###########################
+
+# Open a connection function
+
+def open_connection (prt,baudRate,timeOut,f):
+	if (prt == ""):
+		prt = prt_dft
+	if (baudRate == ""):
+		baudRate = baudRate_dft
+	if (timeOut == ""):
+		timeOut = timeOut_dft
+	
+	try: 
+		com = serial.Serial(port=prt,
+							baudrate=baudRate,
+							parity=serial.PARITY_ODD,
+							stopbits=serial.STOPBITS_TWO,
+							bytesize=serial.SEVENBITS,
+							timeout=timeOut)
+		if com.isOpen():
+			print "The ",com.name," is ready for using!"
+			return com
+		else:
+                        resultTC = "Failed"
+			print "The ",com.name," cannot be opened. Please re-check cable, baud rate or reset module!"
+	except serial.SerialException:
+		print "The connection cannot be opened. Please re-check cable, baud rate or reset module!"
+        f.write("The ",com.name," cannot be opened. Please re-check cable, baud rate or reset module!")
+# End 
+    
+
+def send_cmd_and_check(com, cmd, expected, timeout,f): # Send command and check function
+    
+    com.write(cmd + '\r\n')
+    time.sleep(int(timeout))
+    while com.inWaiting() > 0:
+        buf = com.inWaiting()
+        out = com.read(buf)
+        time.sleep(1)
+        if out != '':
+            break
+        else:
+            pass
+    if (str(expected) != ''):
+        print "Sent command: " + cmd    
+        f.write("Sent command: " + cmd + '\r\n')       
+        print "Expected result: " + expected
+        f.write("Expected result: " + expected +'\r\n') 
+        print "Receive result is: " + out.strip('\r\n')
+        f.write("Receive result is: " + out.strip('\r\n')+'\r\n') 
+        
+        if out.find(expected) !=-1:
+            print "Result: Passed\n\n"
+            f.write("Result: Passed\n\n"+'\r\n')
+        else:
+            resultTC = "Failed\n"
+            raise Exception("TC Failed\n")
+            
+    else:
+        print "Sent command: " + cmd
+        f.write("Sent command: " + cmd+'\r\n')
+        print "Receive result is: " + out.strip('\r\n')
+        f.write("Receive result is: " + out.strip('\r\n'))
+        
+#End function
+
+
+def send_cmd_and_check_return(com, cmd, expected, timeout,f): # Send command, check function and get return
+    com.write(cmd + '\r\n')
+    result = ""
+    time.sleep(int(timeout))
+    while com.inWaiting() > 0:
+               buf = com.inWaiting()
+               out = com.read(buf)
+    print "Sent command: " + cmd + '\n'
+    f.write("Sent command: " + cmd + '\n')
+    print "Expected result: " + expected +'\r\n'
+    f.write("Expected result: " + expected +'\r\n')
+    print ("Receive result is: " + str(out) +'\r\n')
+    f.write("Receive result is: " + str(out) +'\r\n')
+    if (str(expected) != ''):
+        if out.find(expected) !=-1:
+            result = "Passed"
+        else:
+            result = "Failed"
+            raise Exception("TC Failed\n")
+    return result
+#End function
+
+                         
+def send_cmd_and_get_return(com, cmd, timeout,f):   # Send command, and get return to compare
+    com.write(cmd + '\r\n')
+    time.sleep(int(timeout))
+    while com.inWaiting() > 0:
+               buf = com.inWaiting()
+               out = com.read(buf)
+    print "Sent command: " + cmd
+    f.write("Sent command: " + cmd + '\n')
+    print ("Receive result is: " + str(out)+'\r\n')
+    f.write("Receive result is: " + str(out)+'\r\n')
+    return out
+#End function
