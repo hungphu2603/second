@@ -1,0 +1,238 @@
+#!/usr/bin/env python
+
+#------------------------------------------------------------------------------------
+# @Author       Phu Huynh
+# @Date         2017-03-23
+# @Description  Day 3 Practice - GPRS Scenarios
+#
+# Date           Who             Version             Modification
+# 2017-03-21     Phu Huynh       1.0                 Creation
+# 
+# 
+#------------------------------------------------------------------------------------
+
+# Import modules
+
+import serial
+import time, datetime
+import function
+
+#Setup serial parameter
+UART_COM = 21
+UART_BAUD = 115200
+
+try:
+    #Open file log 
+    f = open('GPRS.log', 'w+')
+    
+        
+    # Open the serial
+    ser = function.open_connection(UART_COM,UART_BAUD,2,f)
+    
+    print '_________Preconfig________\n'
+    f.write('_________Preconfig________\n')
+    print 'Turn off echo\n'
+    f.write('Turn off echo\n')
+    
+    #Turn off echo    
+    command_1 = 'ATE0'
+    respons_ok = 'OK' 
+    function.send_cmd_and_check(ser,command_1,respons_ok,1,f)
+       
+    #Verify Supported Baud Rate 
+    command_2 = 'AT+IPR=?'
+    result_2 = '(300,1200,2400,4800,9600,19200,38400,57600,115200,230400,460800,500000,750000,921600,1843200,3000000,3250000,6000000)'
+    function.send_cmd_and_check(ser,command_2,result_2,2,f)
+    
+    #Firmware Version
+    print 'Firmware Version' 
+    f.write('Firmware Version')
+    command_3 = 'AT+CGMR'
+    result_3 = 'RHL85xx.5.5.23.0.201610311418.x6250_7'
+    function.send_cmd_and_check(ser,command_3,result_3,2,f)
+    
+    #Enter PIN
+    print "Enter PIN\n"
+    f.write("Enter PIN\n")
+    command_4 = 'AT+CPIN?'
+    respons_4 = "READY"
+    command_5 = 'AT+CPIN="3699"' 
+    
+    if (function.send_cmd_and_check_return(ser,command_4,respons_4,2,f)!= "Passed"):
+        function.send_cmd_and_check(ser,comand_5,respons_ok,2,f)
+        if (function.send_cmd_and_check_return(ser,command_4,respons_4,2,f)== "Passed"):
+            print "SIM is ready now\n"
+            f.write("SIM is ready now\n")
+        else:
+            resultTC = "Failed"
+            print "Failed. PIN is not correct.\n"
+            f.write("Failed. PIN is not correct.\n")
+            raise Exception("Failed. PIN is not correct.\n")
+    else:
+        print "SIM had been ready\n"
+        f.write("SIM had been ready\n")
+        
+    # Main    
+    #Step 1: Set Radio Mode to Radio access 3G only 
+    print 'Step 1. Test condition radio access 3G only\r\n'      
+    f.write('Step 1. Test condition radio access 3G only\r\n')
+    
+    #Test condition
+    command_6 = 'AT+KSRAT=?'
+    respons_6 = '+KSRAT: (1-4)'
+    function.send_cmd_and_check(ser,command_6,respons_6,1,f)
+    #Auto set to 3G only    
+    mode = function.send_cmd_and_get_return(ser,'AT+KSRAT?',5,f)
+    #Change to 3G mode 
+    if mode.find('+KSRAT: 2') == -1:                            
+        print 'Changing To 3G only\n'
+        f.write ('Changing To 3G only\n')
+        if (function.send_cmd_and_check_return(ser,'AT+KSRAT=2','\r\nOK\r\n',5,f) == 'Passed'):
+            print 'Change to 3G sucessed'
+            f.write ('Change to 3G sucessed')
+        else:
+            print 'Cannot change mode to 3G Only'
+            f.write ('Cannot change mode to 3G Only')
+            raise Exception("Failed\n")
+           
+    else:    
+        print 'Current Mode is 3G Only\r\n'
+        f.write('Current Mode is 3G Only\r\n')
+            
+                
+    # Step 2: Set manual and auto PS Attach     
+    # Manual
+    print '\r\nStep 2. Manual and auto PS Attach.'       
+    f.write ('\r\nStep 2. Manual and auto PS Attach.')
+    #Manual PS Attach with command AT+CGATT
+    print "\n#Manual PS Attach\n"
+    f.write('\n#Manual PS Attach\n')
+    function.send_cmd_and_check(ser,"AT+CGATT=1",'\r\nOK\r\n',5,f)
+    
+    if function.send_cmd_and_check_return(ser,"AT+CGATT?",'+CGATT: 1',5,f)=="Passed":
+        print "Already attached\n"
+        f.write("Already attached\n")
+    else:
+        raise Exception("Cannot Manual PS Attach")
+        
+    
+    # Auto
+    print '#Auto PS Attach.\r\n'
+    f.write('#Auto PS Attach.\r\n')
+    #Auto PS attach
+    attach = function.send_cmd_and_get_return(ser,'AT+KSRAT?',2,f)
+    #Auto PS attach if detach before
+    if attach.find('+KSRAT: 1') == -1:   #PS detach
+        print 'PS Already Detached\r\n'
+        f.write ('PS Already Detached\r\n')
+        if (function.send_cmd_and_check_return(ser,'AT+CGATT=1','\r\nOK\r\n',2,f) == 'Passed'):
+            print 'Auto PS Attach Successed\r\n'
+            f.write('Auto PS Attach Successed\r\n')
+        else:    
+            raise Exception("Cannot Auto PS Attach\r\n")
+    else:
+        print 'PS Attaching\r\n'
+        f.write('PS Attaching\r\n')
+        
+        
+    # Step 3: Set GPRS Class in B/CG   
+    print '\r\nrStep 3. Set GPRS Class in B/CG.\r\n'    #Set GPRS Class in B
+    f.write('\r\nStep 3. Set GPRS Class in B/CG.\r\n')
+    function.send_cmd_and_check(ser,'AT+CGCLASS="B"','\r\nOK\r\n',5,f)
+         
+        
+    print 'Set GPRS Class in CG\r\n'                    #Set GPRS Class in CG
+    f.write('Set GPRS Class in CG\r\n')
+    function.send_cmd_and_check(ser,'AT+CGCLASS="CG"','\r\nOK\r\n',5,f)
+    
+    print 'Set GPRS Class in B\r\n'                     #Set GPRS Class in B
+    f.write('Set GPRS Class in B\r\n')
+    function.send_cmd_and_check(ser,'AT+CGCLASS="B"','\r\nOK\r\n',5,f)
+    
+    #Step 4: Config the PDP Context    
+    #Config PDP context
+    print ('Step 4. Config PDP context index 2,4,5,8,10,18\r\n')
+    f.write('Step 4. Config PDP context index 2,4,5,8,10,18\r\n')
+    
+    print ('Config PDP context 2\r\n')                      #Config PDP context 2
+    f.write('Config PDP context 2\r\n')
+    function.send_cmd_and_check(ser,'AT+CGDCONT=2,"IP","v-internet"','\r\nOK\r\n',1,f)
+    
+    print ('Config PDP context 4\r\n')                      #Config PDP context 4
+    f.write('Config PDP context 4\r\n')  
+    function.send_cmd_and_check(ser,'AT+CGDCONT=4,"IP","e-internet"','\r\nOK\r\n',1,f)
+       
+    print ('Config PDP context 5\r\n')                      #Config PDP context 5
+    f.write('Config PDP context 5\r\n')
+    function.send_cmd_and_check(ser,'AT+CGDCONT=5,"IP","m-wap"','\r\nOK\r\n',1,f)
+    
+    print ('Config PDP context 8\r\n')                      #Config PDP context 8
+    f.write ('Config PDP context 8\r\n')
+    function.send_cmd_and_check(ser,'AT+CGDCONT=8,"IP","invalid"','\r\nOK\r\n',1,f)
+            
+    print ('Config PDP context 10\r\n')                     #Config PDP context 10
+    f.write('Config PDP context 10\r\n')
+    function.send_cmd_and_check(ser,'AT+CGDCONT=10,"IP","m3-world"','\r\nOK\r\n',1,f)
+        
+    print ('Config PDP context 18\r\n')                     #Config PDP context 18
+    f.write('Config PDP context 18\r\n')
+    function.send_cmd_and_check(ser,'AT+CGDCONT=18,"IP","internet"','\r\nOK\r\n',1,f) 
+    
+    # Step 5: Activate PDP Context 2, 4, 5                  #Activate PDP Context 2,4,5
+    print ('Step 5. Activate PDP Context 2, 4, 5\r\n')
+    f.write('Step 5. Activate PDP Context 2, 4, 5\r\n')
+    function.send_cmd_and_check(ser,'AT+CGACT=1,2,4,5','\r\nOK\r\n',10,f)
+    #Show IP of PDP context 2, 4, 4
+    print ('IP PDP context 2, 4, 5\r\n')       
+    f.write('IP PDP context 2, 4, 5\r\n')
+    function.send_cmd_and_get_return(ser,'AT+CGPADDR=2,4,5',2,f)
+    
+    # Step 6: Make call
+    print('Step 6: Make call')
+    f.write('Step 6: Make call')
+    print 'Try to make a call\n'
+    f.write('Try to make a call\n')
+    #Make a call to 01698988250
+    function.send_cmd_and_check(ser,'ATD01698988250;','\r\nOK\r\n',5,f)
+    
+    print "\nOff hook the call\n"
+    f.write('Try to make a call\n')
+    function.send_cmd_and_check(ser,'AT+CHUP','\r\nOK\r\n',5,f)
+    
+    # Step 7: Do HTTP GET from httpbin.org
+    print('Step 7: Do HTTP GET from httpbin.org')
+    f.write('Step 7: Do HTTP GET from httpbin.org')
+    print '\nConfigure GPRS Connection\n'
+    f.write('\nConfigure GPRS Connection\n')
+    function.send_cmd_and_check(ser,'AT+KCNXCFG=1,"GPRS","v-internet"','\r\nOK\r\n',15,f)
+
+    print '\nConfigure HTTP Connection\n'
+    f.write('\nConfigure HTTP Connection\n')
+    function.send_cmd_and_check(ser,'AT+KHTTPCFG=1,"httpbin.org"','+KHTTPCFG: 1\r\n\r\nOK\r\n',15,f)
+
+    print '\nDo HTTP GET\n'
+    f.write('\nDo HTTP GET\n')
+    function.send_cmd_and_check(ser,'AT+KHTTPGET=1,"/get"','\r\nOK\r\n',30,f)
+
+    print '\nClose HTTP Connection\n'
+    f.write('\nClose HTTP Connection\n')
+    function.send_cmd_and_check(ser,'AT+KHTTPCLOSE=1','\r\nOK\r\n',15,f)
+
+    print '\nDelete HTTP Connection\n'
+    f.write('\nDelete HTTP Connection\n')
+    function.send_cmd_and_check(ser,'AT+KHTTPDEL=1','\r\nOK\r\n',15,f)
+                                                
+    # Step 8: De-activate PDP Context 2,4,5
+    print('Step 8: De-activate PDP Context 2,4,5\r\n')
+    f.write('Step 8: De-activate PDP Context 2,4,5\r\n')
+    function.send_cmd_and_check(ser,'AT+CGACT=0,2,4,5','\r\nOK\r\n',15,f)
+    
+    #Close connection
+    print('Serial Close')
+    f.write('Serial CLose')
+    ser.close()
+    
+    
+except Exception, err_msg :
+    resultTC = "TC Failed"
+    print Exception, err_msg
